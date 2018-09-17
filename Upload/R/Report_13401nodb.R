@@ -6,8 +6,26 @@ Report_13401nodb <- function(datasets)
   offtx_date_reason = datasets$offtx.CSV %>% rename_all(tolower) %>% dplyr::select(subject,offtxdate_raw,offtxreason)
   studydrug_date_first_second =datasets$studydrug.CSV%>%rename_all(tolower)%>%filter(foldername=="Cycle 1 (Surgery/Biopsy)")%>%dplyr::select(subject,d1totaldose)
   onstudy_drug = datasets$onstudy.CSV %>% rename_all(tolower) %>% dplyr::select(subject,nscadmindate_raw,x_5fcadmindate_raw)
-  
+  leucovorin = datasets$studydrug.CSV %>% rename_all(tolower) %>% dplyr::select(subject,instancename,leucovoringivenyn,leucovoringivenyn_std)
   ################### Remove duplicated rows in fu.CSV file by selecting only rows with latest contact
+ 
+  #check luecovorinyn matches in two method
+  one = leucovorin[order(leucovorin$leucovoringivenyn_std),]
+  one_unique = one[!duplicated(one$subject),]
+  
+  two = leucovorin[which(tolower(leucovorin$instancename)==grep("^cycle.*1",tolower(leucovorin$instancename),value=TRUE)[1]),]
+  two_order = two[order(two$subject),]
+  two_unique = two[!duplicated(two$subject),]
+  
+  #compare
+  if(all(one_unique$leucovoringivenyn%in% two_unique$leucovoringivenyn))
+  {
+    leucovorin_table = one_unique[c("subject","leucovoringivenyn")]
+  }else
+  {
+    print("Check Leucovorin table for inconsistency in answers")
+  }
+  
   
   ########################## Check the date format for fu form ##########################
   #If true: the date format should be changed; otherwise is ok
@@ -34,7 +52,7 @@ Report_13401nodb <- function(datasets)
   new_fu = new_fu%>%rename_all(tolower)
 
   #merge all tables together
-  mytable = Reduce(function(x, y) merge(x, y, all=TRUE),  list(offs_date_reason ,onstudy_drug,studydrug_date_first_second ,offtx_date_reason,new_fu))
+  mytable = Reduce(function(x, y) merge(x, y, all=TRUE),  list(offs_date_reason ,onstudy_drug,studydrug_date_first_second ,offtx_date_reason,new_fu,leucovorin_table))
 
   #Find unique subjects
   mytable =mytable[!duplicated(mytable$subject),]
@@ -68,10 +86,10 @@ Report_13401nodb <- function(datasets)
 
   ############### Formatting table
   #reorder columns
-  mytable = mytable[c("Subject","NSCADMINDATE_RAW","D1TOTALDOSE","DAYS_NUMBER", "PROGRESSIONYN","PROGRESSIONDATE_FORMAT","BESTRESPFU2","LASTCONTACTDATE_FORMAT","OFFSTUDYDATE_RAW","OFFSTUDYREASON","OFFTXDATE_RAW","OFFTXREASON","VITALSTATUS","DEATHDATE_RAW")]
+  mytable = mytable[c("Subject","NSCADMINDATE_RAW","D1TOTALDOSE","LEUCOVORINGIVENYN","DAYS_NUMBER", "PROGRESSIONYN","PROGRESSIONDATE_FORMAT","BESTRESPFU2","LASTCONTACTDATE_FORMAT","OFFSTUDYDATE_RAW","OFFSTUDYREASON","OFFTXDATE_RAW","OFFTXREASON","VITALSTATUS","DEATHDATE_RAW")]
 
   #rename columns
-  mytable = rename(mytable, "Date of NSC"="NSCADMINDATE_RAW","Actual First Dose of NSC"="D1TOTALDOSE","Days from NSCs to progression \n or if not progressed the last contact date"="DAYS_NUMBER", "Progression?"="PROGRESSIONYN","Progression Date"="PROGRESSIONDATE_FORMAT","Overall Best Response (RANO Criteria)"="BESTRESPFU2",
+  mytable = rename(mytable, "Date of NSC"="NSCADMINDATE_RAW","Actual First Dose of NSC"="D1TOTALDOSE","Leucovorin?"="LEUCOVORINGIVENYN","Days from NSCs to progression \n or if not progressed the last contact date"="DAYS_NUMBER", "Progression?"="PROGRESSIONYN","Progression Date"="PROGRESSIONDATE_FORMAT","Overall Best Response (RANO Criteria)"="BESTRESPFU2",
                    "Last Contact Date"="LASTCONTACTDATE_FORMAT","Off Study Date"="OFFSTUDYDATE_RAW","Off Study Reason"="OFFSTUDYREASON","Off Treatment Date"="OFFTXDATE_RAW","Off Treatment Reason"="OFFTXREASON","Vital Status"="VITALSTATUS","Date of Death"="DEATHDATE_RAW"  )
 
 
