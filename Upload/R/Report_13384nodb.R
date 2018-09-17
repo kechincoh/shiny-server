@@ -129,7 +129,7 @@ Report_13384nodb <- function(datasets)
     mytable_date = as.data.frame(lapply(mytable_date,as.Date))
     
     #change format
-    col_format = c("Progression Date","Last Contact Date","Date of Death")
+    col_format = c("Progression Date","Date of T-cell Infusion","Last Contact Date","Date of Death")
     mytable_date_format = as.data.frame(lapply(mytable_date,format,format="%m/%d/%y"))
     mytable_col_format = as.data.frame(lapply(mytable[col_format],format,format="%m/%d/%y" ))
     
