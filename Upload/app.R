@@ -34,10 +34,10 @@ ui <- fluidPage(
            tabsetPanel(id="tabs2",
                           tabPanel("Monitoring Report", DT::dataTableOutput("moni2"),
                                    # Button
-                                   downloadButton("downMoni2", "Download")),
+                                   ),
                           tabPanel("Death within 30 days", DT::dataTableOutput("death2"),
                                    #Butoon
-                                   downloadButton("downdeath2", "Download")),
+                                   ),
                           tabPanel("Demographic Report", DT::dataTableOutput("demo2"),
                                    fluidRow(
                                      column(5,
@@ -217,20 +217,20 @@ server <- function(input, output) {
   })
   
   ######################## Rendering the table ###############################################
-  output$moni2 <- DT::renderDataTable({templateInput()},extensions = 'Buttons',options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")) ,
+  output$moni2 <- DT::renderDataTable({templateInput()},class = 'cell-border stripe',extensions = 'Buttons',options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")) ,
                            initComplete = JS(
                              "function(settings, json) {",
                              "$(this.api().table().header()).css({'background-color': '#008080', 'color': '#fff'});",
                              "}"),escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'A2',filename='file'))
   ))
-  output$death2 <- DT::renderDataTable({deathInputnodb()},options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")),
+  output$death2 <- DT::renderDataTable({deathInputnodb()},class = 'cell-border stripe',options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")),
                           initComplete = JS(
                             "function(settings, json) {",
                             "$(this.api().table().header()).css({'background-color': '#008080', 'color': '#fff'});",
                             "}"),escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'A2',filename='file'))
   ))
   
-  output$demo2 <- DT::renderDataTable({demoInputnodb()},options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")),
+  output$demo2 <- DT::renderDataTable({demoInputnodb()},class = 'cell-border stripe',options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")),
                           initComplete = JS(
                             "function(settings, json) {",
                             "$(this.api().table().header()).css({'background-color': '#008080', 'color': '#fff'});",
