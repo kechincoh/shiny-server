@@ -96,9 +96,11 @@ Report_demo_13401_nodb <- function(datasets)
     combined_label[1,4:5]=c("Gender"," ")
     combined_label[1,6:11]=c("Race"," "," "," "," "," ")
     combined_label[1,12:14]=c("Ethnicity"," "," ")
-    combined_label = as.data.frame(combined_label)
+    #combined_label = as.data.frame(combined_label)
     names(combined_label)<-NULL
     
+    colnames(combined_label)<-c(" ","Age Group"," ","Gender"," ","Race"," "," "," "," "," ","Ethnicity"," "," ")
+    combined_label = combined_label[-1,]
     
     combined_label
 
