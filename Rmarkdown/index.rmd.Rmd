@@ -119,65 +119,9 @@ highest_grade_cycle = reactive({group_by(ae_tablecycle_order(),Subject)%>% mutat
 
 #change column's name
 #names(highest_grade_cycle)<-c("Subject","Highest AE grade within first two cycle")
-#renderTable(highest_grade_cycle())
-
-# ################# Report 3: Subjects with grade >=3 diarrhea attributed to neratinib within first two cycle############################################
-#select subjects with diarrhea and grade greater or equal than 3
-ae_diarrhea_34 = ae_clean[which(tolower(ae_clean$MEDRACODE_CLEAN)=="diarrhea" & (ae_clean$AEGRADE_STD>=3)& (tolower(ae_clean$InstanceName)=="cycle 01" | tolower(ae_clean$InstanceName)=="cycle 02")),]
-
-#reorder columns and rename
-ae_table34_order = ae_diarrhea_34[c("Subject","MEDRACODE_CLEAN","AEGRADE","ATTRIBUTED1","AESTARTDATE_RAW","InstanceName")]
-ae_table34_new = rename(ae_table34_order,"Adverse Effect"=MEDRACODE_CLEAN,"AE DATE"=AESTARTDATE_RAW,"AE GRADE"=AEGRADE,"ATTRIBUTION"="ATTRIBUTED1","Cycle"=InstanceName)
-
-#change format of date
-ae_table34_new["AE DATE"] = format(as.Date(convert_date(ae_table34_new$`AE DATE`)),"%m/%d/%y" )
+renderTable(highest_grade_cycle())
 
 
-################ Report 4: Number of cases of diarrhea by grade level within two first cycle ##########################################
-ae_new = ae_sub_new[which(tolower(ae_sub_new$`Adverse Effect`)=="diarrhea"&(tolower(ae_clean$InstanceName)=="cycle 01" | tolower(ae_clean$InstanceName)=="cycle 02")),]
-#remove duplicates
-ae_diarrhea_order = ae_new[rev(order(ae_new$AEGRADE)),]
-ae_diarrhea_nodup = ae_diarrhea_order[!duplicated(ae_diarrhea_order[c("Subject","AEGRADE")]),]
-ae_diarrhea_nodup_new = ae_diarrhea_nodup[!duplicated(ae_diarrhea_nodup$Subject),]
-
-####################################### STOP HERE ##############################
-#convert to wide format
-ae_diarrhea_table = dcast(ae_diarrhea_nodup_new,'Adverse Effect'~AEGRADE,fun.aggregate = length,value.var = "Adverse Effect")
-
-#format table
-ae_diarrhea_table[1,1]<-"Diarrhea"
-renderDataTable( DT::datatable(ae_diarrhea,caption ="Table of patients who experienced diarrhea regardless of cycle"))
-# For pdf rendering 
-#kable(ae_diarrhea_ord,"latex",booktabs=T,longtable=TRUE,row.names = FALSE)%>%kable_styling(font_size=7,latex_options = "repeat_header")%>%add_footnote("Table of patients who experienced diarrhea regardless of cycle",notation="symbol")  
-```   
-
-####Summary: 
-There are **`r length(unique(ae_diarrhea_ord$Subject))`** subjects who experienced diarrhea out of `r total_subject` subjects enrolled in the study. Patient **`r setdiff(unique(subject$Subject),unique(ae_diarrhea_ord$Subject))`** has not experienced diarrhea yet   
-\newpage  
-```{r}
-count = length(which(highest_grade_cycle$`Highest AE grade within first two cycle`>=3))
-
-renderDataTable(DT::datatable( highest_grade_cycle,caption ="Table of highest AE grade for subjects who experienced diarrhea within the first two cycles" ))
-
-#for pdf rendering 
-#kable(highest_grade_cycle,"latex",booktabs=T,row.names = FALSE)%>%kable_styling(font_size=8)%>%add_footnote("Table of highest AE grade for subjects who experienced diarrhea within the first two cycles",notation="symbol")
-```
-
-####Summary:  
-There are **`r count`** subjects out of **`r length(unique(highest_grade_cycle$Subject))`** who experienced diarrhea grade 3 or higher within the first two cycles 
-\newline
-\newline
-\newline
-\newline
-```{r}
-renderTable(ae_table34_new) 
-
-#for pdf rendering 
-#kable(ae_table34_new,"latex",booktabs=T,row.names = FALSE)%>%kable_styling(font_size=8)%>%add_footnote("Table of patients who experienced diarrhea grade 3 or higher within two cycles",notation="symbol")
-
-renderTable(ae_diarrhea_table)
-#for pdf rendering
-# kable(ae_diarrhea_table,"latex",booktabs=T,row.names = FALSE)%>%kable_styling(font_size=8)%>%add_footnote("Number of subjects who experienced diarrhea within the first two cycle by AE grade")
 
 ```
 
