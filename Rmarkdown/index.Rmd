@@ -1,0 +1,166 @@
+---
+title: "Monitor for diarrhea grade 3 or higher for protocol 15342"
+geometry: margin=0.5cm
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+runtime: shiny
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+#libraries
+library(dplyr)                  
+library(reshape2)               
+library(knitr)
+library(kableExtra)
+library(shiny)
+library(DT)
+
+#functions
+source('./R/convert_date.R')    #function to convert to date type
+source('./R/extract_col.R')     #function to extract columns
+```
+```{r echo=FALSE}
+
+#upload csv files
+fluidPage(
+  fluidRow(
+    column(3,inputPanel(
+      fileInput('datafile', 'Choose CSV file',
+                     width = "75%",
+                     multiple = TRUE,
+                     accept=c('text/csv','text/comma-separated-values,text/plain',".csv"))
+      )
+    ))
+)
+
+```
+
+```{r}
+    #reactive variable for uploaded csv files
+    df <- reactive({
+    req(input$datafile)
+    
+    
+    #read all csv files uploaded
+    files= lapply(input$datafile$datapath, read.csv,header=TRUE,stringsAsFactors=F,na.string="")
+    
+    #add names of element's list to respective supplied CSV files' names
+    names(files)<-input$datafile$name
+    
+    #filter all elements of list by Active==1
+    files_active = lapply(files,function(x) x[which(x$RecordActive==1),])
+
+    files_active
+   
+  })
+
+ #subject data
+ subject_data = reactive({df()$subj.CSV%>%rename_all(toupper)%>% select(SUBJECT,RPN)%>%arrange(SUBJECT)})
+
+ #total number of subjects
+ total_subject = reactive({subject_data()%>%distinct(SUBJECT)%>%nrow})
+
+ #adverse event data
+ ae_data= reactive({df()$aelog.CSV}) 
+
+#select desired columns from aelog
+ae_clean = reactive({ae_data() %>% select(Subject,MEDDRACODE,AESTARTDATE_RAW,AEGRADE,AEGRADE_STD,ATTRIBUTED1,InstanceName) %>%mutate(MEDRACODE_CLEAN=gsub("[0-9-]",'',MEDDRACODE))})
+
+
+####################### Overall subjects in study ############################################
+fluidRow(
+  column(5,
+renderDataTable(DT::datatable( subject_data(),caption = "Total Subjects"),options = list(
+  autoWidth = TRUE,
+  columnDefs = list(list(className='dt-center', targets = "_all"))))
+))
+#for pdf rendering
+#kable(subject,format="latex",booktabs=T,row.names = FALSE)%>%kable_styling(position="center")
+```
+
+**_There are `r  total_subject` patients accrued in the study_**  
+
+```{r}
+################# Report 1: Number of cases of diarrhea regardless of attribution and cycle (OVerall report diarrhea) ######################################
+ae_sub = reactive({ae_clean()%>%select(Subject,AEGRADE,AESTARTDATE_RAW,MEDRACODE_CLEAN,InstanceName,ATTRIBUTED1)%>%rename("AE DATE"=AESTARTDATE_RAW,"Adverse Effect"=MEDRACODE_CLEAN)%>%mutate("AE DATE"=format(as.Date(convert_date(`AE DATE`)),"%m/%d/%y" ))})
+
+#select diarrhea
+ae_diarrhea = reactive({ae_sub() %>%mutate(`Adverse Effect`=tolower(`Adverse Effect`))%>% filter(`Adverse Effect`=="diarrhea")%>%rename("Cycle"=InstanceName,"ATTRIBUTION"=ATTRIBUTED1)%>%arrange(Subject)}) 
+
+unique_subjects = reactive({ setdiff(unique(subject_data()$SUBJECT),unique(ae_diarrhea()$Subject))})
+n_diarrhea = reactive({length(unique(ae_diarrhea()$Subject))})
+############## table ###################
+renderDataTable(DT::datatable( ae_diarrhea(),caption = "Table of patients who experienced diarrhea regardless of cycle"))
+```
+There are **`r n_diarrhea`** subjects who experienced diarrhea out of `r total_subject` subjects enrolled in the study. Patient **`r unique_subjects`** has not experienced diarrhea yet 
+
+```{r}
+################# Report 2: Subjects highest AE grade within the first two cycles ############################################
+#select subjects with diarrhea and grade greater or equal than 3
+ae_diarrhea_cycle = reactive({ae_clean()%>%mutate(MEDRACODE_CLEAN=tolower(MEDRACODE_CLEAN),InstanceName=tolower(InstanceName))%>%filter(MEDRACODE_CLEAN=="diarrhea" & InstanceName %in% c("cycle 01","cycle 02")) })
+
+#renderTable({ae_diarrhea_cycle()})
+
+#reorder columns and rename
+ae_tablecycle_order = reactive({ae_diarrhea_cycle()%>%select(Subject,MEDRACODE_CLEAN,AEGRADE_STD,ATTRIBUTED1,AESTARTDATE_RAW,InstanceName)%>%rename("Adverse Effect"=MEDRACODE_CLEAN,"AE DATE"=AESTARTDATE_RAW,"AE GRADE"=AEGRADE_STD,"ATTRIBUTION"=ATTRIBUTED1,"Cycle"=InstanceName)  })
+
+#highest ae grade for each subject
+highest_grade_cycle = reactive({group_by(ae_tablecycle_order(),Subject)%>% mutate(`AE GRADE`=as.character(`AE GRADE`))%>% summarise("Highest AE grade within first two cycle"=max(`AE GRADE`)) })
+
+count_34 = reactive({length(which(highest_grade_cycle()$`Highest AE grade within first two cycle`>=3)) }) 
+n_highest = reactive({length(unique(highest_grade_cycle()$Subject)) })
+
+##### table ######
+fluidRow(
+  column(5,
+renderDataTable(DT::datatable( highest_grade_cycle(),caption ="Table of highest AE grade for subjects who experienced diarrhea within the first two cycles",options = list(
+  autoWidth = TRUE,
+  columnDefs = list(list(className='dt-center', targets = "_all")))))
+))
+```
+There are **`r count_34`** subjects out of **`r n_highest`** who experienced diarrhea grade 3 or higher within the first two cycles
+```{r}
+# ################# Report 3: Subjects with grade >=3 diarrhea attributed to neratinib within first two cycle############################################
+#select subjects with diarrhea and grade greater or equal than 3
+ae_diarrhea_34 = reactive({ae_clean()%>%mutate(MEDRACODE_CLEAN=tolower(MEDRACODE_CLEAN),InstanceName=tolower(InstanceName))%>%filter(MEDRACODE_CLEAN=="diarrhea" & AEGRADE_STD>=3 & (InstanceName=="cycle 01" | InstanceName=="cycle 02"))%>%select(Subject,MEDRACODE_CLEAN,AEGRADE,ATTRIBUTED1,AESTARTDATE_RAW,InstanceName)%>%rename("Adverse Effect"=MEDRACODE_CLEAN,"AE DATE"=AESTARTDATE_RAW,"AE GRADE"=AEGRADE,"ATTRIBUTION"="ATTRIBUTED1","Cycle"=InstanceName)%>%mutate(`AE DATE`=format(as.Date(convert_date(`AE DATE`)),"%m/%d/%y" ))})  
+
+##### table #####
+renderDataTable(DT::datatable( ae_diarrhea_34(),caption ="Table of patients who experienced diarrhea grade 3 or higher within two cycles"))
+
+################ Report 4: Number of cases of diarrhea by grade level within two first cycle ##########################################
+ae_new = reactive({ae_sub()%>%mutate(`Adverse Effect`=tolower(`Adverse Effect`),InstanceName=tolower(InstanceName))%>%filter(`Adverse Effect`=="diarrhea" & (InstanceName=="cycle 01" | InstanceName=="cycle 02"))})
+
+ae_diarrhea_nodup_new = reactive({ae_new()%>%arrange(desc(AEGRADE))%>%distinct(Subject,AEGRADE,.keep_all = T)%>%distinct(Subject,.keep_all = T)})
+
+
+# #convert to wide format
+ae_diarrhea_table = reactive({dcast(ae_diarrhea_nodup_new(),'Adverse Effect'~AEGRADE,fun.aggregate = length,value.var = "Adverse Effect")})
+
+fluidRow(
+  column(7,
+renderDataTable(DT::datatable( ae_diarrhea_table(),caption ="Number of subjects who experienced diarrhea within the first two cycle by AE grade", options = list(
+  dom='t',
+  autoWidth = TRUE,
+  columnDefs = list(list(className='dt-center', targets = "_all")))))
+))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
