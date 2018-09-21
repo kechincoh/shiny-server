@@ -6,10 +6,10 @@ Report_13351nodb <- function(datasets)
     offs_date_reason =  datasets$offstudy.CSV  %>% rename_all(tolower) %>% dplyr::select(subject,offstudydate_raw,offstudyreason)
     offtx_date_reason =  datasets$offtx.CSV  %>% rename_all(tolower) %>% dplyr::select(subject,offtxdate_raw,offtxreason)
     tcell_leuk = datasets$tcell.CSV %>% rename_all(tolower) %>% dplyr::select(subject,assigneddose,leukapheresisdate_raw)
-    onstudy_drug = datasets$onstudy.CSV %>% rename_all(tolower) %>% dplyr::select(subject,strata)
     subject = datasets$subj.CSV %>% rename_all(tolower) %>% dplyr::select(subject,upn)
     tcell_infusdate = datasets$tcelladmin.CSV %>% rename_all(tolower) %>% dplyr::select(subject,infusiondate_raw,infusiondose)
-    
+    tcell_admin = datasets$tcelladmin.CSV %>% rename_all(tolower) %>% select(subject,treatmentarm)
+    offprot_date_reason = datasets$offprottherapy.CSV%>%rename_all(tolower)%>%select(subject,eventtype,eventdate_raw)
     ################### Remove duplicated rows in fu.CSV file by selecting only rows with latest contact
     
     ########################## Check the date format for fu form ##########################
@@ -38,7 +38,7 @@ Report_13351nodb <- function(datasets)
     new_fu = new_fu%>%rename_all(tolower)
     
     #merge all tables together
-    mytable = Reduce(function(x, y) merge(x, y, all=TRUE), list(subject, onstudy_drug,offs_date_reason ,tcell_leuk,tcell_infusdate,offtx_date_reason,new_fu))
+    mytable = Reduce(function(x, y) merge(x, y, all=TRUE), list(subject, tcell_admin,offs_date_reason ,tcell_leuk,tcell_infusdate,offtx_date_reason,new_fu,offprot_date_reason))
     
     #Find unique subjects
     mytable =mytable[!duplicated(mytable$subject),]
@@ -74,17 +74,17 @@ Report_13351nodb <- function(datasets)
     ############### Formatting table
     
     #reorder columns
-    mytable = mytable[c("Subject","UPN","STRATA","LEUKAPHERESISDATE_RAW","INFUSIONDATE_RAW","INFUSIONDOSE","DAYS_NUMBER","PROGRESSIONYN","PROGRESSIONDATE_FORMAT","BESTRESPFU","LASTCONTACTDATE_FORMAT","OFFSTUDYDATE_RAW","OFFSTUDYREASON","OFFTXDATE_RAW","OFFTXREASON","VITALSTATUS","DEATHDATE_FORMAT")]
+    mytable = mytable[c("Subject","UPN","TREATMENTARM","LEUKAPHERESISDATE_RAW","INFUSIONDATE_RAW","INFUSIONDOSE","DAYS_NUMBER","PROGRESSIONYN","PROGRESSIONDATE_FORMAT","BESTRESPFU","LASTCONTACTDATE_FORMAT","OFFSTUDYDATE_RAW","OFFSTUDYREASON","OFFTXDATE_RAW","OFFTXREASON","VITALSTATUS","DEATHDATE_FORMAT","EVENTTYPE","EVENTDATE_RAW")]
     
     #rename columns
-    mytable = rename(mytable,  "Strata"="STRATA","Date of Leukapheresis"="LEUKAPHERESISDATE_RAW","Date of T-cell Infusion"="INFUSIONDATE_RAW","T-Cell Dose x 10^6 cells"="INFUSIONDOSE","Days from T-cell infusion to progression \n or if not progressed the current report date"="DAYS_NUMBER",
+    mytable = rename(mytable,  "Treatment Arm"="TREATMENTARM","Date of Leukapheresis"="LEUKAPHERESISDATE_RAW","Date of T-cell Infusion"="INFUSIONDATE_RAW","T-Cell Dose x 10^6 cells"="INFUSIONDOSE","Days from T-cell infusion to progression \n or if not progressed the current report date"="DAYS_NUMBER",
                                  "Progression?"="PROGRESSIONYN","Progression Date"="PROGRESSIONDATE_FORMAT","Overall Best Response (IWC and IWCLL Criteria)"="BESTRESPFU",
-                                 "Last Contact Date"="LASTCONTACTDATE_FORMAT","Off Study Date"="OFFSTUDYDATE_RAW","Off Study Reason"="OFFSTUDYREASON","Off Treatment Date"="OFFTXDATE_RAW","Off Treatment Reason"="OFFTXREASON","Vital Status"="VITALSTATUS","Date of Death"="DEATHDATE_FORMAT")
+                                 "Last Contact Date"="LASTCONTACTDATE_FORMAT","Off Study Date"="OFFSTUDYDATE_RAW","Off Study Reason"="OFFSTUDYREASON","Off Treatment Date"="OFFTXDATE_RAW","Off Treatment Reason"="OFFTXREASON","Vital Status"="VITALSTATUS","Date of Death"="DEATHDATE_FORMAT","Off Protocol Therapy Reason"="EVENTTYPE","Off Protocol Therapy Date"="EVENTDATE_RAW")
     
     
     #change the date format from yy/m/d to mm/dd/yy
     #columns with dates
-    dates_col = c("Date of Leukapheresis","Date of T-cell Infusion", "Off Study Date","Off Treatment Date" )
+    dates_col = c("Date of Leukapheresis","Date of T-cell Infusion", "Off Study Date","Off Treatment Date","Off Protocol Therapy Date" )
     
     #convert to date type
     mytable_date = as.data.frame(lapply(mytable[dates_col],convert_date))

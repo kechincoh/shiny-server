@@ -4,9 +4,9 @@ plot2 <-function(dataset,rows,nx,ny)
 {
   eth_trans2 = as.data.frame(t(dataset))
   eth_cols2 = eth_trans2[,1:4]
-  #names(bb1)
+  colunames = grep("^[^Tot]",names(eth_cols2),ignore.case = T,value = TRUE)
   eth_rows2 = eth_cols2[rows,]
-  val2 = melt(eth_rows2,id.vars = c("Arm 1: AML","Arm 2: BPDCN"))
+  val2 = melt(eth_rows2,id.vars = colunames)
   tot2 = melt(eth_rows2,id.vars = c("Total1","Total2"))
   tot2_new = tot2[,3:4]
   long_table2 = cbind(tot2_new,val2[,4])
