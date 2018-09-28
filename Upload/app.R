@@ -28,10 +28,25 @@ ui <- fluidPage(
                      accept=c('text/csv','text/comma-separated-values,text/plain',".csv")),
           
            # Horizontal line ----
-           tags$hr()
+           tags$hr(),
+           
+           #load button
+           actionButton("go","Load")
             ),
       column(10,
            tabsetPanel(id="tabs2",
+                          tabPanel("Overall",
+                                fluidRow(
+                                  column(5,
+                                         plotOutput("overall")),
+                                  column(6,
+                                         plotOutput("overall_prog")),
+                                  column(5,
+                                         plotOutput("overall_br")),
+                                  column(5,
+                                         plotOutput("overall_vital"))
+                                )
+                           ),
                           tabPanel("Monitoring Report", DT::dataTableOutput("moni2")
                                    ),
                           tabPanel("Death within 30 days", DT::dataTableOutput("death2")
@@ -72,7 +87,7 @@ server <- function(input, output) {
   })
   
   #Reactive value for selected template for monitor report
-  templateInput <- reactive({
+  templateInput <- eventReactive(input$go,{
     switch(input$template,
            "13272"= Report_13272nodb(df()),
            "13277"= Report_13277nodb(df()),
@@ -88,7 +103,7 @@ server <- function(input, output) {
   })
   
   #Reactive value for selected template for death report
-  deathInputnodb <- reactive({
+  deathInputnodb <- eventReactive(input$go,{
     switch(input$template,
            "13272"= Report_death_13272_nodb(df()),
            "13277"= Report_death_13277_nodb(df()),
@@ -105,7 +120,7 @@ server <- function(input, output) {
   })
   
   #Reactive value for selected template for demo report
-  demoInputnodb <- reactive({
+  demoInputnodb <- eventReactive(input$go,{
     switch(input$template,
            "13272" = Report_demo_13272_nodb(df()),
            "13277" = Report_demo_13277_nodb(df()),
@@ -119,7 +134,29 @@ server <- function(input, output) {
            )
     
   })
+  ############### Overall plot #################
+  output$overall <- renderPlot({
+    the_data <- templateInput()
+    #print(input$dataset)
+    plot_overall(the_data)
+  })
   
+  output$overall_prog <- renderPlot({
+    the_data <- templateInput()
+    plot_overall_prog(the_data)
+    
+  })
+  
+  output$overall_br <- renderPlot({
+    the_data <-templateInput()
+    plot_overall_best(the_data)
+  })
+  
+  output$overall_vital <- renderPlot({
+    the_data <-templateInput()
+    plot_overall_vital(the_data)
+    
+  })
   ################# Barplots #############################
   # barplot for age for nodb #
   output$age_bar2 <- renderPlot({

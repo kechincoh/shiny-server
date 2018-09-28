@@ -3,8 +3,8 @@ Report_death_13272_nodb<- function(datasets)
   
     #Data cleanup
     #select the desired columns 
-    fu_death =  datasets$fu.CSV  %>% rename_all(tolower) %>% select(subject,deathdate_raw,vitalstatus,deathcause)
-    offtx_lastprot =  datasets$offtx.CSV  %>% rename_all(tolower) %>% select(subject,lastprottxdate_raw)
+    fu_death =  datasets$fu.CSV  %>% rename_all(tolower) %>% dplyr::select(subject,deathdate_raw,vitalstatus,deathcause)
+    offtx_lastprot =  datasets$offtx.CSV  %>% rename_all(tolower) %>% dplyr::select(subject,lastprottxdate_raw)
     
     
     #merge files

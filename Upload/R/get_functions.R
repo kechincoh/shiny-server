@@ -18,6 +18,10 @@ get_functions <- function()
   source('./R/plot2.R')
   source('./R/plot3.R')
   source('./R/plot4.R')
+  source('./R/plot_overall.R')
+  source('./R/plot_overall_prog.R')
+  source('./R/plot_overall_best.R')
+  source('./R/plot_overall_vital.R')
   
   ## Monitor functions ##
   source('./R/Report_13401nodb.R') 

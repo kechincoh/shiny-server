@@ -34,6 +34,7 @@ Report_death_15342_nodb<-function(datasets)
     #rename columns
     merged_clean2 = rename(merged_clean2, "Subject"="subject","Date of Death"="DEATHDATE_FORMAT", "Last protocol Treatment Date"="LASTPROTTXDATE_FORMAT","Days Between Last Treatment Date and Death Date"="diff","Cause of Death"="deathcause")
     
+    merged_clean2 = merged_clean2[!duplicated(merged_clean2$Subject),]
     rownames(merged_clean2)<-c()
     
     merged_clean2
