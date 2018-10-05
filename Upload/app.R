@@ -1,3 +1,5 @@
+#09/28/18 - added action button to make my input variable event reactive
+#         - added overall charts
 #note: the extension buttons only work on browser not on app in Rstudio
 
 #load required libraries
@@ -29,13 +31,13 @@ ui <- fluidPage(
           
            # Horizontal line ----
            tags$hr(),
-           
-           #load button
            actionButton("go","Load")
+           
+       
             ),
       column(10,
            tabsetPanel(id="tabs2",
-                          tabPanel("Overall",
+                       tabPanel("Overall",
                                 fluidRow(
                                   column(5,
                                          plotOutput("overall")),
@@ -69,10 +71,12 @@ ui <- fluidPage(
 # Define server logic required to create table
 server <- function(input, output) {
   
-  
+
   ########################### upload ##################################
-  df <- reactive({
+
+    df <- reactive({
     req(input$datafile)
+    
     
     #read all csv files uploaded
     files= lapply(input$datafile$datapath, read.csv,header=TRUE,stringsAsFactors=F,na.string="")
@@ -86,8 +90,9 @@ server <- function(input, output) {
     files_active
   })
   
+
   #Reactive value for selected template for monitor report
-  templateInput <- eventReactive(input$go,{
+  templateInput <- eventReactive(input$go ,{
     switch(input$template,
            "13272"= Report_13272nodb(df()),
            "13277"= Report_13277nodb(df()),
@@ -134,6 +139,7 @@ server <- function(input, output) {
            )
     
   })
+  
   ############### Overall plot #################
   output$overall <- renderPlot({
     the_data <- templateInput()
@@ -157,6 +163,7 @@ server <- function(input, output) {
     plot_overall_vital(the_data)
     
   })
+  
   ################# Barplots #############################
   # barplot for age for nodb #
   output$age_bar2 <- renderPlot({
@@ -184,6 +191,8 @@ server <- function(input, output) {
   output$eth_bar2 <- renderPlot({
     
     our_data <- demoInputnodb()
+    print(our_data)
+    print(dim(our_data))
     if(dim(our_data)[1]<4)
     {
       plot1(our_data,12:14,"Ethnicity","Freq")
@@ -250,29 +259,31 @@ server <- function(input, output) {
     }
     
   })
-  
+
   ######################## Rendering the table ###############################################
   output$moni2 <- DT::renderDataTable({templateInput()},class = 'cell-border stripe',extensions = 'Buttons',options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")) ,
                            initComplete = JS(
                              "function(settings, json) {",
                              "$(this.api().table().header()).css({'background-color': '#008080', 'color': '#fff'});",
-                             "}"),escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'A2',filename='file'))
+                             "}"),paging=FALSE, escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'A2',filename='file'))
   ))
   output$death2 <- DT::renderDataTable({deathInputnodb()},class = 'cell-border stripe',extensions = 'Buttons',options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")),
                           initComplete = JS(
                             "function(settings, json) {",
                             "$(this.api().table().header()).css({'background-color': '#008080', 'color': '#fff'});",
-                            "}"),escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'A2',filename='file'))
+                            "}"),escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'LEGAL',filename='file'))
   ))
   
   output$demo2 <- DT::renderDataTable({demoInputnodb()},class = 'cell-border stripe',extensions = 'Buttons',options = list(columnDefs = list(list(className = 'dt-center', targets = "_all")),
                           initComplete = JS(
                             "function(settings, json) {",
                             "$(this.api().table().header()).css({'background-color': '#008080', 'color': '#fff'});",
-                            "}"),escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'A2',filename='file'))
+                            "}"),escape=FALSE,dom = 'Bfrtip',buttons = list('copy',list(extend='csv',filename='file'),list(extend='pdf',orientation = 'landscape',pageSize = 'LEGAL',filename='file'))
   ))
-  
 
+ 
+
+  
 }
 
 
