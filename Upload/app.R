@@ -1,5 +1,6 @@
 #09/28/18 - added action button to make my input variable event reactive
 #         - added overall charts
+#10/15/18 - added two types of dual for demographic report-changed plot4
 #note: the extension buttons only work on browser not on app in Rstudio
 
 #load required libraries
@@ -176,7 +177,7 @@ server <- function(input, output) {
     {
       plot2(our_data,1:3,"Age","Freq")
     }
-    else if(dim(our_data)[1]>6 & dim(our_data)[1]<10)
+    else if(dim(our_data)[1]>6 & dim(our_data)[1]<11)
     {
       plot4(our_data,1:3,"Age","Freq")
     }
@@ -201,7 +202,7 @@ server <- function(input, output) {
     {
       plot2(our_data,12:14,"Ethnicity","Freq")
     }
-    else if(dim(our_data)[1]>6 & dim(our_data)[1]<10)
+    else if(dim(our_data)[1]>6 & dim(our_data)[1]<11)
     {
       plot4(our_data,12:14,"Ethnicity","Freq")
     }
@@ -225,7 +226,7 @@ server <- function(input, output) {
       plot2(our_data,4:5,"Gender","Freq")
       
     }
-    else if(dim(our_data)[1]>6 & dim(our_data)[1]<10)
+    else if(dim(our_data)[1]>6 & dim(our_data)[1]<11)
     {
       plot4(our_data,4:5,"Gender","Freq")
     }
@@ -249,7 +250,7 @@ server <- function(input, output) {
       plot2(our_data,6:11,"Race","Freq")
       
     }
-    else if(dim(our_data)[1]>6 & dim(our_data)[1]<10)
+    else if(dim(our_data)[1]>6 & dim(our_data)[1]<11)
     {
       plot4(our_data,6:11,"Race","Freq")
     }

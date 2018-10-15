@@ -23,8 +23,11 @@ Report_demo_13447_nodb<-function(datasets)
     merged_nodupl$group[merged_nodupl$Age_years>=17 & merged_nodupl$Age_years<65] <- "Adult"
     merged_nodupl$group[merged_nodupl$Age_years>=65] <- "Elderly"
     
+    #finding the different wording for unknown,unknown not reported, not reported
+    unkw = grep("unknown|not reported",tolower(merged_nodupl$ethnicity),value=TRUE)
+    
     #Create New Ethnicity table with levels as Hispanic,Non-Hispanic,Unknown or Not Reported)
-    merged_nodupl = mutate(merged_nodupl, ETHNICITY_RECODE = ifelse( ethnicity %in% "Hispanic or Latino", "Hispanic",ifelse(ethnicity %in% "Non-Hispanic or Latino", "Non-Hispanic", "Unknown or Not Reported")))
+    merged_nodupl = mutate(merged_nodupl, ETHNICITY_RECODE = ifelse(tolower(ethnicity) %in% "hispanic or latino", "Hispanic",ifelse(tolower(ethnicity) %in% "non-hispanic or latino", "Non-Hispanic", ifelse(tolower(ethnicity) %in% unkw,str_wrap("Unknown or Not Reported",width = 12),"NONE"))))
     
     
     #Table for Race
@@ -96,7 +99,7 @@ Report_demo_13447_nodb<-function(datasets)
     names(gender_table_df)[grep("var1",names(gender_table_df),ignore.case = T)]<-cnames
     
     #### Table for Ethnicity
-    t_ethnicity = lapply(split_by_trt, function(x) as.data.frame(table(factor(x$ETHNICITY_RECODE,levels=c("Hispanic","Non-Hispanic","Unknown or Not Reported")))))
+    t_ethnicity = lapply(split_by_trt, function(x) as.data.frame(table(factor(x$ETHNICITY_RECODE,levels=str_wrap(c("Hispanic","Non-Hispanic","Unknown or Not Reported"),width = 12)))))
     
     #Convert to data frame
     eth_table_df = as.data.frame(t_ethnicity)

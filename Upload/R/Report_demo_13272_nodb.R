@@ -32,8 +32,11 @@ Report_demo_13272_nodb <- function(datasets)
     merged_nodupl$group[merged_nodupl$Age_years>=17 & merged_nodupl$Age_years<65] <- "Adult"
     merged_nodupl$group[merged_nodupl$Age_years>=65] <- "Elderly"
     
+    #finding the different wording for unknown,unknown not reported, not reported
+    unkw = grep("unknown|not reported",tolower(merged_nodupl$ethnicity),value=TRUE)
+    
     #Create New Ethnicity table with levels as Hispanic,Non-Hispanic,Unknown or Not Reported)
-    merged_nodupl = mutate(merged_nodupl, ETHNICITY_RECODE = ifelse(ethnicity %in% "Hispanic or Latino", "Hispanic",ifelse(ethnicity %in% "Non-Hispanic or Latino", "Non-Hispanic", ifelse(ethnicity %in% "Unknown or Not Reported",str_wrap("Unknown or Not Reported",width = 12),"NONE"))))
+    merged_nodupl = mutate(merged_nodupl, ETHNICITY_RECODE = ifelse(tolower(ethnicity) %in% "hispanic or latino", "Hispanic",ifelse(tolower(ethnicity) %in% "non-hispanic or latino", "Non-Hispanic", ifelse(tolower(ethnicity) %in% unkw,str_wrap("Unknown or Not Reported",width = 12),"NONE"))))
     
     #Table for Race
     #Combining Pacific islander and asian

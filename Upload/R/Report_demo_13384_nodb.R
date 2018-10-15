@@ -18,7 +18,7 @@ Report_demo_13384_nodb <- function(datasets)
     strata = datasets$protocolproced.CSV %>% rename_all(tolower) %>% dplyr::select(subject,protprocedtype,protprocedtype_std)
 
     #Changing the names of strata to match template
-    strata["RECODE"] = ifelse(strata$protprocedtype_std==1,"Biopsy",ifelse(strata$protprocedtype_std==2,"Resection",ifelse(strata$protprocedtype_std==3,"ICV","Dual")))
+    strata["RECODE"] = ifelse(strata$protprocedtype_std==1,"Biopsy",ifelse(strata$protprocedtype_std==2,"Resection",ifelse(strata$protprocedtype_std==3,"ICV",ifelse(strata$protprocedtype_std==4,"Dual-Tcm","Dual-Tnmem"))))
     
     #Remove unnecessary columns
     strata_clean = strata[,c("subject","RECODE")]
@@ -41,8 +41,11 @@ Report_demo_13384_nodb <- function(datasets)
     merged_nodupl$group[merged_nodupl$Age_years>=17 & merged_nodupl$Age_years<65] <- "Adult"
     merged_nodupl$group[merged_nodupl$Age_years>=65] <- "Elderly"
     
+    #finding the different wording for unknown,unknown not reported, not reported
+    unkw = grep("unknown|not reported",tolower(merged_nodupl$ethnicity),value=TRUE)
+    
     #Create New Ethnicity table with levels as Hispanic,Non-Hispanic,Unknown or Not Reported)
-    merged_nodupl = mutate(merged_nodupl, ETHNICITY_RECODE = ifelse(ethnicity %in% "Hispanic or Latino", "Hispanic",ifelse(ethnicity %in% "Non-Hispanic or Latino", "Non-Hispanic", ifelse(ethnicity %in% "Unknown or Not Reported","Unknown or Not Reported","NONE"))))
+    merged_nodupl = mutate(merged_nodupl, ETHNICITY_RECODE = ifelse(tolower(ethnicity) %in% "hispanic or latino", "Hispanic",ifelse(tolower(ethnicity) %in% "non-hispanic or latino", "Non-Hispanic", ifelse(tolower(ethnicity) %in% unkw,str_wrap("Unknown or Not Reported",width = 12),"NONE"))))
     
     #Table for Race
     #Combining Pacific islander and asian
@@ -93,7 +96,7 @@ Report_demo_13384_nodb <- function(datasets)
     age_table = lapply(split_by_strata,function(x) as.data.frame(table(factor(x$group,levels=c("Pediatric","Adult","Elderly")))))
     
     #column names
-    cnames = c("Biopsy","Total1","Dual","Total2","ICV","Total3","Resection","Total4")
+    cnames = c("Biopsy","Total1","Dual-Tcm","Total2","Dual-Tnmem","Total3","ICV","Total4","Resection","Total5")
     
     #Convert to data frame
     age_table_df = as.data.frame(age_table)
@@ -110,7 +113,7 @@ Report_demo_13384_nodb <- function(datasets)
     colnames(gender_table_df)<-cnames
     
     #### Table for Ethnicity
-    t_ethnicity = lapply(split_by_strata, function(x) as.data.frame(table(factor(x$ETHNICITY_RECODE,levels=c("Hispanic","Non-Hispanic","Unknown or Not Reported")))))
+    t_ethnicity = lapply(split_by_strata, function(x) as.data.frame(table(factor(x$ETHNICITY_RECODE,levels=str_wrap(c("Hispanic","Non-Hispanic","Unknown or Not Reported"),width = 12)))))
     
     #Convert to data frame
     eth_table_df = as.data.frame(t_ethnicity)
