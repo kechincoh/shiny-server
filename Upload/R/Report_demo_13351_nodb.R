@@ -6,8 +6,15 @@ Report_demo_13351_nodb <- function(datasets)
                                                                                                              raceasian,racenativeamerican,raceunknown,racenondisclosed)
     tcell_admin = datasets$tcelladmin.CSV %>% rename_all(tolower) %>% dplyr::select(subject,treatmentarm)
     
+    # ######### cleaning tcell infusion ######                                                        
+    tcelladmin_select = datasets$tcelladmin.CSV %>% rename_all(tolower) %>% dplyr::select(subject,infusiondate_raw)
+    tcelladmin_select["infusiondate_raw"]=ifelse(tcelladmin_select$infusiondate_raw %in% c(""," ","NA"), NA, tcelladmin_select$infusiondate_raw)
+    tcelladmin_nona = tcelladmin_select[!is.na(tcelladmin_select$infusiondate_raw),]
+    tcelladmin_unique = tcelladmin_nona[!duplicated(tcelladmin_nona$subject),]
+    
+    
     ######### merge clean files #############################
-    merged = Reduce(function(x, y) merge(x, y,all=TRUE), list(tcell_admin,demo_select))
+    merged = Reduce(function(x, y) merge(x, y), list(tcell_admin,tcelladmin_unique,demo_select))
     merged_nodupl = merged[!duplicated(merged),]
     
     #Convert to date type for birthdate and consent date

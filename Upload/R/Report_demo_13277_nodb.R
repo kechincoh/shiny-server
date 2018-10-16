@@ -7,8 +7,14 @@ Report_demo_13277_nodb <- function(datasets)
                                                                                                              raceasian,racenativeamerican,raceunknown,racenondisclosed)
     trt_arm = datasets$transplant.CSV%>% rename_all(tolower) %>% dplyr::select(subject,treatmentarm)  
     
+    # ######### cleaning tcell infusion ######                                                        
+    tcelladmin_select = datasets$transplant.CSV %>% rename_all(tolower) %>% dplyr::select(subject,infusiondate_raw)
+    tcelladmin_select["infusiondate_raw"]=ifelse(tcelladmin_select$infusiondate_raw %in% c(""," ","NA"), NA, tcelladmin_select$infusiondate_raw)
+    tcelladmin_nona = tcelladmin_select[!is.na(tcelladmin_select$infusiondate_raw),]
+    tcelladmin_unique = tcelladmin_nona[!duplicated(tcelladmin_nona$subject),]
+    
     #################### merge files
-    merged = merge(demo_select,trt_arm)
+    merged = Reduce(function(x, y) merge(x, y), list(tcelladmin_unique,demo_select,trt_arm))
     merged_nodupl = merged[!duplicated(merged),]      
     
     ################### Create Age Group
